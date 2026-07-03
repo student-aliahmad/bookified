@@ -15,6 +15,7 @@ import { parsePDFFile } from '@/lib/utils';
 import { upload } from '@vercel/blob/client';
 import { z } from 'zod';
 
+
 const voiceOptions = [
   { value: 'dave', label: 'Dave', description: 'Young male, British-Essex, casual & conversational' },
   { value: 'daniel', label: 'Daniel', description: 'Middle-aged male, British, authoritative but warm' },
@@ -65,19 +66,26 @@ export default function UploadForm() {
       return toast.error("Please login to upload books");
     }
     setIsSubmitting(true);
+    console.log("STEP 1");
     try {
-      console.log("STEP 1");
       const existsCheck = await checkBookExists(data.title);
+      console.log("CHECK RESULT:", existsCheck);
+      console.log("STEP 2");
+
+      if (existsCheck.error) {
+        throw new Error(`Database error: ${existsCheck.error}`);
+      }
+
       if (existsCheck.exists && existsCheck.book) {
         toast.info("Book with same title already exists.");
-        reset()
+        reset();
         router.push(`/books/${existsCheck.book.slug}`);
         return;
       }
 
       const fileTitle = data.title.replace(/\s+/g, '_').toLowerCase();
       const pdfFile = data.pdfFile;
-      console.log("STEP 2");
+      
       const parsedPDF = await parsePDFFile(pdfFile);
 
       if (parsedPDF.content.length === 0) {
@@ -153,7 +161,7 @@ export default function UploadForm() {
       if (book.alreadyExists) {
         toast.info("Book with same title already exists.");
         reset()
-        router.push(`/books/${existsCheck.book.slug}`);
+        router.push(`/books/${book.data.slug}`);
         return;
       }
       console.log("STEP 5");
