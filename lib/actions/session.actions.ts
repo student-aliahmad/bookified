@@ -2,27 +2,48 @@
 
 import VoiceSession from "@/database/models/voiceSession.model";
 import { connectToDatabase } from "@/database/mongoose";
-import { getCurrentBillingPeriodStart } from "@/lib/subscription-constants";
+import { auth } from "@clerk/nextjs/server";
+import { getCurrentBillingPeriodStart, getPlanLimits, resolvePlanFromHas } from "@/lib/subscription-constants";
 import { StartSessionResult, EndSessionResult } from "@/types";
 
 export const startVoiceSession = async (clerkId: string, bookId: string): Promise<StartSessionResult> => {
     try {
+        const { has, userId } = await auth();
+
+        if (!userId) {
+            return { success: false, error: 'Unauthorized: User not authenticated' };
+        }
+
         await connectToDatabase();
-        
-        // Limits/Plan to see whether a session is allowed.
+
+        const plan = resolvePlanFromHas(has);
+        const limits = getPlanLimits(plan);
+        const billingPeriodStart = getCurrentBillingPeriodStart();
+        const monthlySessionCount = await VoiceSession.countDocuments({
+            clerkId: userId,
+            billingPeriodStart,
+        });
+
+        if (limits.maxSessionsPerMonth !== null && monthlySessionCount >= limits.maxSessionsPerMonth) {
+            return {
+                success: false,
+                error: `Your ${limits.label} plan allows up to ${limits.maxSessionsPerMonth} sessions per month. Upgrade to continue.`,
+                isBillingError: true,
+            };
+        }
 
         const session = await VoiceSession.create({
-            clerkId,
+            clerkId: userId,
             bookId,
             startedAt: new Date(),
-            billingPeriodStart: getCurrentBillingPeriodStart(),
+            billingPeriodStart,
             durationSeconds: 0,
         });
 
         return {
              success: true,
              sessionId: session._id.toString(),
-             // maxDurationMinutes: check.maxDurationMinutes,
+             maxDurationMinutes: limits.maxSessionMinutes,
         }
     } catch (e) {
         console.error('Error starting voice session', e);

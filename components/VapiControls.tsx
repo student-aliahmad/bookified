@@ -4,9 +4,34 @@ import useVapi from '@/hooks/useVapi'
 import { IBook } from '@/types'
 import { Mic, X } from 'lucide-react'
 import Transcript from './Transcript'
+import { formatDuration } from '@/lib/utils'
 
 const VapiControls = ({ book } : { book : IBook}) => {
-    const {  status, isActive, messages, currentMessage, currentUserMessage, duration, start, stop, clearErrors,} = useVapi(book)
+    const {
+      plan,
+      limits,
+      status,
+      isActive,
+      messages,
+      currentMessage,
+      currentUserMessage,
+      duration,
+      maxDurationSeconds,
+      start,
+      stop,
+      clearErrors,
+    } = useVapi(book)
+
+    const statusConfig = {
+      idle: { label: 'Ready', dot: 'bg-slate-400' },
+      connecting: { label: 'Connecting', dot: 'bg-amber-500' },
+      starting: { label: 'Starting', dot: 'bg-amber-500' },
+      listening: { label: 'Listening', dot: 'bg-emerald-500' },
+      thinking: { label: 'Thinking', dot: 'bg-sky-500' },
+      speaking: { label: 'Speaking', dot: 'bg-rose-500' },
+    } as const
+
+    const currentStatus = statusConfig[status]
     return (
 
         <>
@@ -48,14 +73,21 @@ const VapiControls = ({ book } : { book : IBook}) => {
 
           <div className="mt-5 flex flex-wrap gap-3">
             <span className="vapi-status-indicator inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm">
-              <span className="vapi-status-dot inline-block h-2.5 w-2.5 rounded-full bg-slate-400" />
-              <span className="vapi-status-text text-slate-700">Ready</span>
+              <span className={`vapi-status-dot inline-block h-2.5 w-2.5 rounded-full ${currentStatus.dot}`} />
+              <span className="vapi-status-text text-slate-700">{currentStatus.label}</span>
             </span>
             <span className="vapi-status-indicator inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm">
               <span className="vapi-status-text text-slate-700">Voice: {book.persona}</span>
             </span>
             <span className="vapi-status-indicator inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm">
-              <span className="vapi-status-text text-slate-700">0:00/15:00</span>
+              <span className="vapi-status-text text-slate-700">
+                {formatDuration(duration)}/{formatDuration(maxDurationSeconds)}
+              </span>
+            </span>
+            <span className="vapi-status-indicator inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm">
+              <span className="vapi-status-text text-slate-700">
+                Plan: {limits.label} ({plan})
+              </span>
             </span>
           </div>
         </div>
