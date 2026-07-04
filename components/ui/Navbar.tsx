@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SignInButton,UserButton,Show,useUser } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 
 
 
@@ -11,11 +11,12 @@ import { SignInButton,UserButton,Show,useUser } from "@clerk/nextjs";
 const navItems = [
     { label: "Library", href: "/" },
     { label: "Add New", href: "/books/new" },
+    { label: "Billing", href: "/subscriptions" },
 ]
 
 const Navbar = () => {
     const pathName = usePathname();
-    const { user } = useUser();
+    const { isLoaded, isSignedIn } = useAuth();
 
     return (
         <header className="w-full fixed z-50 bg-[var(--bg-primary)]">
@@ -36,21 +37,17 @@ const Navbar = () => {
                     })}
 
                     <div className="flex gap-7.5 items-center">
-                        <Show when="signed-out">
-                            <SignInButton mode="modal" />
-                        </Show>
-                         
-                        <Show when="signed-in">
+                        {!isLoaded ? (
                             <div className="nav-user-link">
-                              <UserButton />
-                              {user?.firstName && (
-                                <Link href="/subscription" className="nav-user-name">
-                                    {user.firstName}
-                                </Link>
-                              )}
+                                <span className="h-10 w-10 rounded-full bg-black/10 animate-pulse" aria-hidden="true" />
                             </div>
-                            
-                        </Show>
+                        ) : isSignedIn ? (
+                            <div className="nav-user-link">
+                                <UserButton />
+                            </div>
+                        ) : (
+                            <SignInButton mode="modal" />
+                        )}
                     </div>
 
 

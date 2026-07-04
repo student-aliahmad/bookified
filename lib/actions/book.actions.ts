@@ -2,11 +2,16 @@
 
 import { CreateBook, TextSegment } from "@/types";
 import { connectToDatabase } from "@/database/mongoose";
-import { generateSlug, serializeData } from "@/lib/utils";
+import { escapeRegex, generateSlug, serializeData } from "@/lib/utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/bookSegment.model";
-import { json } from "zod";
 import { Types } from "mongoose";
+import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
+import { getPlanLimits, resolvePlanFromHas } from "@/lib/subscription-constants";
+
+
+
 
 export const getAllBooks = async () => {
     try {
@@ -26,6 +31,44 @@ export const getAllBooks = async () => {
         }
     }
 }
+
+export const searchBooks = async (query: string) => {
+    try {
+        await connectToDatabase();
+
+        const normalizedQuery = query.trim();
+
+        if (!normalizedQuery) {
+            const books = await Book.find().sort({ createdAt: -1 }).lean();
+
+            return {
+                success: true,
+                data: serializeData(books),
+            };
+        }
+
+        const escapedQuery = escapeRegex(normalizedQuery);
+        const books = await Book.find({
+            $or: [
+                { title: { $regex: escapedQuery, $options: 'i' } },
+                { author: { $regex: escapedQuery, $options: 'i' } },
+            ],
+        })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        return {
+            success: true,
+            data: serializeData(books),
+        };
+    } catch (e) {
+        console.error('Error searching books', e);
+        return {
+            success: false,
+            error: e instanceof Error ? e.message : String(e),
+        };
+    }
+};
 
 export const checkBookExists = async (title: string) => {
     try {
@@ -58,9 +101,16 @@ export const checkBookExists = async (title: string) => {
 
 export const createBook = async (data: CreateBook) => {
     try {
-        console.log("createBook started");
+        const { has, userId } = await auth();
+
+        if (!userId) {
+            return {
+                success: false,
+                error: 'Unauthorized: User not authenticated',
+            };
+        }
+
         await connectToDatabase();
-        console.log("MongoDB connected")
 
         const slug = generateSlug(data.title);
         const existingBook = await Book.findOne({slug}).lean();
@@ -75,10 +125,20 @@ export const createBook = async (data: CreateBook) => {
             }
         }
 
-        // Todo: Check subscription limits before creating a book
+        const plan = resolvePlanFromHas(has);
+        const limits = getPlanLimits(plan);
+        const bookCount = await Book.countDocuments({ clerkId: userId });
 
-        const book = await Book.create({ ...data, slug, totalSegments: 0 });
-        console.log("Book created:", book);
+        if (bookCount >= limits.maxBooks) {
+            return {
+                success: false,
+                error: `Your ${limits.label} plan allows up to ${limits.maxBooks} book${limits.maxBooks === 1 ? '' : 's'}. Upgrade to add more books.`,
+            };
+        }
+
+        const book = await Book.create({ ...data, clerkId: userId, slug, totalSegments: 0 });
+          
+        revalidatePath('/')
 
         return {
             success: true,

@@ -154,8 +154,20 @@ export default function UploadForm() {
       });
 
       if (!book.success) {
-        const message = book.error ? `Failed to create book: ${book.error}` : 'Failed to create book';
-        throw new Error(message);
+        const limitReached = book.error?.toLowerCase().includes('upgrade') || book.error?.toLowerCase().includes('plan allows up to');
+
+        if (limitReached) {
+          toast.error('You have reached your current plan limit. Upgrade to add more books.', {
+            action: {
+              label: 'Upgrade plan',
+              onClick: () => router.push('/subscriptions'),
+            },
+          });
+          router.push('/subscriptions');
+          return;
+        }
+
+        throw new Error(book.error ? `Failed to create book: ${book.error}` : 'Failed to create book');
       }
 
       if (book.alreadyExists) {

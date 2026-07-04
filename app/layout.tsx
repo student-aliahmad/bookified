@@ -31,14 +31,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={'${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased'}>
-         <ClerkProvider>
+      <body className={`${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased`}>
+        <ClerkProvider>
           <Navbar />
-        {children}
-        <Toaster />
-       </ClerkProvider>
-        </body>
+          {children}
+          <Toaster />
+        </ClerkProvider>
+      </body>
     </html>
-    
+
   );
 }

@@ -196,6 +196,24 @@
   .clerk-subscriptions {
     @apply py-18 min-h-screen max-w-7xl px-5 mx-auto w-full flex flex-col pb-12 items-center container;
   }
+  .subscriptions-hero {
+    @apply rounded-[32px] border border-[var(--border-subtle)] bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(243,228,199,0.45))] p-6 md:p-10 shadow-[var(--shadow-soft-lg)];
+  }
+  .subscriptions-grid {
+    @apply grid gap-8 lg:grid-cols-[1.15fr_0.85fr] items-start;
+  }
+  .pricing-table-shell {
+    @apply rounded-[28px] border border-[var(--border-subtle)] bg-white/90 p-3 md:p-4 shadow-[var(--shadow-soft-lg)];
+  }
+  .plan-pill {
+    @apply inline-flex items-center rounded-full border border-[var(--border-subtle)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)];
+  }
+  .plan-card {
+    @apply rounded-[24px] border border-[var(--border-subtle)] bg-white/90 p-5 shadow-[var(--shadow-soft)];
+  }
+  .plan-kicker {
+    @apply text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-brand)];
+  }
   .page-title {
     @apply !text-3xl font-bold text-center;
   }
@@ -374,7 +392,7 @@
     @apply max-w-7xl px-5 mx-auto w-full pt-20 sm:pt-28 min-h-screen pb-12;
   }
   .library-filter-bar {
-    @apply mb-5 md:mb-9 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4;
+    @apply mb-5 md:mb-9 flex flex-col gap-4 md:flex-row md:items-center md:justify-between;
   }
   .auth-footer {
     @apply mt-10 text-center text-sm text-(--text-secondary) max-w-md;
@@ -564,8 +582,17 @@
   .library-search-wrapper {
     @apply flex items-center bg-white border border-[var(--border-subtle)] rounded-lg overflow-hidden w-full sm:w-80;
   }
+  .library-search-form {
+    @apply flex w-full flex-col gap-3 md:w-auto md:min-w-[360px] lg:min-w-[420px] md:flex-row md:items-center md:justify-end;
+  }
+  .library-search-shell {
+    @apply flex flex-1 items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-white px-4 py-2.5 shadow-[var(--shadow-soft-sm)] transition focus-within:border-[rgba(33,42,59,0.26)] focus-within:ring-2 focus-within:ring-[rgba(33,42,59,0.08)];
+  }
+  .library-search-icon {
+    @apply h-4 w-4 shrink-0 text-[#9a8f82];
+  }
   .library-search-input {
-    @apply flex-1 py-2 px-4 outline-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)];
+    @apply h-8 w-full border-0 bg-transparent p-0 text-sm text-[var(--text-primary)] outline-none placeholder:text-[#9a8f82] focus:ring-0;
   }
   .library-books-grid {
     @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-3 md:gap-x-10 gap-y-7 md:gap-y-9;
