@@ -10,10 +10,6 @@ const LibrarySearchBar = ({ initialQuery }: { initialQuery: string }) => {
   const [value, setValue] = useState(initialQuery);
 
   useEffect(() => {
-    setValue(initialQuery);
-  }, [initialQuery]);
-
-  useEffect(() => {
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       const nextValue = value.trim();
@@ -51,7 +47,7 @@ const LibrarySearchBar = ({ initialQuery }: { initialQuery: string }) => {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder="Search books by title or author"
-          className="library-search-input"
+          className="library-search-input [&::-webkit-search-cancel-button]:appearance-none"
           aria-label="Search books by title or author"
         />
         {value ? (

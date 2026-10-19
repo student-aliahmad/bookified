@@ -10,64 +10,96 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { getPlanLimits, resolvePlanFromHas } from "@/lib/subscription-constants";
 
-
-
-
 export const getAllBooks = async () => {
-    try {
-        await connectToDatabase();
+  try {
+    const { userId } = await auth();
 
-        const books = await Book.find().sort({ createdAt: -1 }).lean();
-
-        return {
-            success: true,
-            data:  serializeData(books),
-        }
-    } catch (e) {
-        console.error('Errror connecting to database', e);
-        return {
-            success: false,
-            error: e,
-        }
+    // User signed in nahi hai to books mat dikhao.
+    if (!userId) {
+      return {
+        success: true,
+        data: [],
+      };
     }
-}
+
+    await connectToDatabase();
+
+    // Sirf logged-in user ki books fetch karo.
+    const books = await Book.find({ clerkId: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return {
+      success: true,
+      data: serializeData(books),
+    };
+  } catch (e) {
+    console.error("Error fetching books:", e);
+
+    return {
+      success: false,
+      error: "Failed to fetch books.",
+    };
+  }
+};
+
 
 export const searchBooks = async (query: string) => {
-    try {
-        await connectToDatabase();
+  try {
+    const { userId } = await auth();
 
-        const normalizedQuery = query.trim();
-
-        if (!normalizedQuery) {
-            const books = await Book.find().sort({ createdAt: -1 }).lean();
-
-            return {
-                success: true,
-                data: serializeData(books),
-            };
-        }
-
-        const escapedQuery = escapeRegex(normalizedQuery);
-        const books = await Book.find({
-            $or: [
-                { title: { $regex: escapedQuery, $options: 'i' } },
-                { author: { $regex: escapedQuery, $options: 'i' } },
-            ],
-        })
-            .sort({ createdAt: -1 })
-            .lean();
-
-        return {
-            success: true,
-            data: serializeData(books),
-        };
-    } catch (e) {
-        console.error('Error searching books', e);
-        return {
-            success: false,
-            error: e instanceof Error ? e.message : String(e),
-        };
+    // Login nahi hai to koi books mat dikhao.
+    if (!userId) {
+      return {
+        success: true,
+        data: [],
+      };
     }
+
+    await connectToDatabase();
+
+    const normalizedQuery = query.trim();
+
+    // Sirf logged-in user ki books search hongi.
+    const filter: Record<string, unknown> = {
+      clerkId: userId,
+    };
+
+    if (normalizedQuery) {
+      const escapedQuery = escapeRegex(normalizedQuery);
+
+      filter.$or = [
+        {
+          title: {
+            $regex: escapedQuery,
+            $options: "i",
+          },
+        },
+        {
+          author: {
+            $regex: escapedQuery,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const books = await Book.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return {
+      success: true,
+      data: serializeData(books),
+    };
+  } catch (e) {
+    console.error("Error searching books:", e);
+
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
 };
 
 export const checkBookExists = async (title: string) => {
@@ -247,3 +279,5 @@ export const saveBookSegments = async (bookId: string, clerkId: string, segments
         };
     }
 }
+
+
