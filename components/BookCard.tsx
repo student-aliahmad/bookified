@@ -25,3 +25,5 @@ const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
 }
 
 export default BookCard;
+
+
